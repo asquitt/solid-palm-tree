@@ -1,0 +1,132 @@
+# Docker Compose for Distributed LLM Platform
+# Orchestrates all services for local development
+
+version: '3.8'
+
+services:
+  # MLflow Tracking Server
+  mlflow:
+    image: ghcr.io/mlflow/mlflow:latest
+    container_name: llm-mlflow
+    ports:
+      - "5000:5000"
+    volumes:
+      - mlflow-data:/mlflow
+    command: mlflow server --host 0.0.0.0 --port 5000 --backend-store-uri sqlite:///mlflow/mlflow.db --default-artifact-root /mlflow/artifacts
+    networks:
+      - llm-network
+
+  # Ray Head Node
+  ray-head:
+    build:
+      context: .
+      target: base
+    container_name: llm-ray-head
+    ports:
+      - "8265:8265"  # Dashboard
+      - "10001:10001"  # Client
+      - "6379:6379"  # Redis
+    volumes:
+      - ./src:/app/src
+      - ./outputs:/app/outputs
+      - ./data:/app/data
+    command: |
+      bash -c "
+        ray start --head --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265 --num-cpus=4 --num-gpus=0 &&
+        tail -f /dev/null
+      "
+    networks:
+      - llm-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # Ray Worker Node (optional, for distributed training)
+  ray-worker:
+    build:
+      context: .
+      target: base
+    volumes:
+      - ./src:/app/src
+      - ./outputs:/app/outputs
+      - ./data:/app/data
+    command: |
+      bash -c "
+        sleep 10 &&
+        ray start --address=ray-head:6379 --num-cpus=4 --num-gpus=0 &&
+        tail -f /dev/null
+      "
+    depends_on:
+      - ray-head
+    networks:
+      - llm-network
+    deploy:
+      replicas: 2
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # Jupyter Notebook for interactive development
+  jupyter:
+    build:
+      context: .
+      target: dev
+    container_name: llm-jupyter
+    ports:
+      - "8888:8888"
+    volumes:
+      - ./src:/app/src
+      - ./notebooks:/app/notebooks
+      - ./data:/app/data
+      - ./outputs:/app/outputs
+    environment:
+      - JUPYTER_ENABLE_LAB=yes
+    networks:
+      - llm-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+
+  # Model Serving (Ray Serve)
+  model-serve:
+    build:
+      context: .
+      target: prod
+    container_name: llm-serve
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./outputs:/app/outputs
+    environment:
+      - MODEL_PATH=/app/outputs/best_model
+    command: llm-serve --model-path ${MODEL_PATH:-./outputs/best_model} --port 8000
+    depends_on:
+      - ray-head
+    networks:
+      - llm-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+volumes:
+  mlflow-data:
+    driver: local
+
+networks:
+  llm-network:
+    driver: bridge
