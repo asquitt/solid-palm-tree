@@ -225,8 +225,14 @@ class SecretsManager:
                 secrets = {}
                 if os.path.exists(file_path):
                     import json
-                    with open(file_path, "r") as f:
-                        secrets = json.load(f)
+                    try:
+                        with open(file_path, "r") as f:
+                            content = f.read().strip()
+                            if content:  # Only parse if file has content
+                                secrets = json.loads(content)
+                    except json.JSONDecodeError:
+                        # File exists but is empty or invalid - start fresh
+                        secrets = {}
 
                 secrets[key] = value
 

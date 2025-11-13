@@ -13,16 +13,16 @@ Main modules:
 - data: Feast integration and data pipelines
 - checkpointing: DVC and cloud storage integration
 - optimization: Cost optimization and spot instance management
+- security: Authentication, authorization, and secrets management
+- utils: Retry logic, health checks, and monitoring
 """
 
-__version__ = "0.1.0"
+__version__ = "0.3.0"
 __author__ = "Your Name"
 __license__ = "MIT"
 
-# Expose main components for convenient imports
-from src.training import Trainer, DistributedTrainer
-from src.evaluation import LLMEvaluator
-from src.serving import ModelServer
+# Lazy imports to avoid importing heavy dependencies (torch, ray, transformers)
+# when they're not needed. Import only when actually used.
 
 __all__ = [
     "Trainer",
@@ -30,3 +30,17 @@ __all__ = [
     "LLMEvaluator",
     "ModelServer",
 ]
+
+
+def __getattr__(name):
+    """Lazy import main components only when accessed."""
+    if name == "Trainer" or name == "DistributedTrainer":
+        from src.training import Trainer, DistributedTrainer
+        return Trainer if name == "Trainer" else DistributedTrainer
+    elif name == "LLMEvaluator":
+        from src.evaluation import LLMEvaluator
+        return LLMEvaluator
+    elif name == "ModelServer":
+        from src.serving import ModelServer
+        return ModelServer
+    raise AttributeError(f"module '{__name__}' has no attribute '{name}'")
