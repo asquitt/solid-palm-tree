@@ -1,0 +1,85 @@
+# Core ML & Deep Learning
+torch>=2.0.0
+transformers>=4.30.0
+datasets>=2.14.0
+tokenizers>=0.13.3
+accelerate>=0.20.0
+peft>=0.4.0  # Parameter-Efficient Fine-Tuning (LoRA, etc.)
+bitsandbytes>=0.39.0  # 8-bit optimizers for memory efficiency
+
+# Distributed Computing & Orchestration
+ray[default,train,tune,serve]>=2.6.0
+horovod>=0.28.0  # Multi-node synchronization
+mpi4py>=3.1.4  # MPI support for Horovod
+
+# MLOps & Experiment Tracking
+mlflow>=2.5.0
+feast>=0.32.0  # Feature store
+dvc[s3,gs,azure]>=3.0.0  # Data version control with cloud support
+optuna>=3.2.0  # Additional hyperparameter optimization
+
+# Evaluation Metrics
+rouge-score>=0.1.2
+sacrebleu>=2.3.1
+bert-score>=0.3.13
+nltk>=3.8.1
+scikit-learn>=1.3.0
+
+# Cloud & Infrastructure
+kubernetes>=26.1.0
+boto3>=1.28.0  # AWS SDK
+google-cloud-storage>=2.10.0  # GCP storage
+azure-storage-blob>=12.17.0  # Azure storage
+prometheus-client>=0.17.0  # Metrics export
+
+# Data Processing
+pandas>=2.0.0
+numpy>=1.24.0
+pyarrow>=12.0.0  # Fast data serialization
+datasets>=2.14.0
+
+# Visualization & Monitoring
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.15.0
+tensorboard>=2.13.0
+wandb>=0.15.0  # Optional: Weights & Biases integration
+
+# API & Web
+fastapi>=0.100.0
+uvicorn>=0.23.0
+pydantic>=2.0.0
+requests>=2.31.0
+
+# Testing
+pytest>=7.4.0
+pytest-asyncio>=0.21.0
+pytest-cov>=4.1.0
+pytest-mock>=3.11.0
+pytest-timeout>=2.1.0
+locust>=2.15.0  # Performance/load testing
+
+# Code Quality
+black>=23.7.0
+flake8>=6.0.0
+mypy>=1.4.0
+isort>=5.12.0
+pre-commit>=3.3.0
+
+# Utilities
+python-dotenv>=1.0.0
+pyyaml>=6.0
+click>=8.1.0  # CLI framework
+tqdm>=4.65.0
+colorlog>=6.7.0  # Colored logging
+rich>=13.5.0  # Rich terminal output
+
+# Documentation
+mkdocs>=1.5.0
+mkdocs-material>=9.1.0
+mkdocstrings[python]>=0.22.0
+
+# Jupyter & Interactive
+jupyter>=1.0.0
+ipywidgets>=8.0.0
+jupyterlab>=4.0.0

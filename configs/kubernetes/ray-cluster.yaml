@@ -1,0 +1,97 @@
+# Ray Cluster Deployment for Kubernetes
+# This creates a Ray cluster with GPU support for distributed LLM training
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: ray-llm
+
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: ray-head
+  namespace: ray-llm
+spec:
+  selector:
+    component: ray-head
+  ports:
+    - name: dashboard
+      port: 8265
+      targetPort: 8265
+    - name: client
+      port: 10001
+      targetPort: 10001
+    - name: redis
+      port: 6379
+      targetPort: 6379
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ray-head
+  namespace: ray-llm
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      component: ray-head
+  template:
+    metadata:
+      labels:
+        component: ray-head
+    spec:
+      containers:
+      - name: ray-head
+        image: rayproject/ray:latest-gpu
+        ports:
+        - containerPort: 8265
+        - containerPort: 10001
+        - containerPort: 6379
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          ray start --head --port=6379 --dashboard-host=0.0.0.0 --dashboard-port=8265
+          sleep infinity
+        resources:
+          requests:
+            memory: "16Gi"
+            cpu: "4"
+          limits:
+            memory: "32Gi"
+            cpu: "8"
+
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ray-worker-gpu
+  namespace: ray-llm
+spec:
+  replicas: 4  # 4 GPU workers
+  selector:
+    matchLabels:
+      component: ray-worker-gpu
+  template:
+    metadata:
+      labels:
+        component: ray-worker-gpu
+    spec:
+      containers:
+      - name: ray-worker
+        image: rayproject/ray:latest-gpu
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          ray start --address=ray-head:6379
+          sleep infinity
+        resources:
+          requests:
+            memory: "32Gi"
+            cpu: "8"
+            nvidia.com/gpu: "1"  # Request 1 GPU per worker
+          limits:
+            memory: "64Gi"
+            cpu: "16"
+            nvidia.com/gpu: "1"
