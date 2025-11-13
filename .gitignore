@@ -30,6 +30,8 @@ wheels/
 # Jupyter
 .ipynb_checkpoints
 *.ipynb
+# But allow notebooks in notebooks/ directory
+!notebooks/*.ipynb
 
 # IDEs
 .vscode/
